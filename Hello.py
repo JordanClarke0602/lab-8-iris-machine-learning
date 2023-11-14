@@ -14,6 +14,9 @@
 
 import streamlit as st
 from streamlit.logger import get_logger
+import numpy as np
+import joblib
+import sklearn
 
 LOGGER = get_logger(__name__)
 
@@ -24,27 +27,52 @@ def run():
         page_icon="👋",
     )
 
-    st.write("# Welcome to Streamlit! 👋")
+    #load Scaler
+    scaler = joblib.load("iris-scaler.pkl")
+
+    #load Model
+    model = joblib.load("svc_model.pkl")
+
+    st.write("# Welcome to the Iris Classifier 👋")
 
     st.sidebar.success("Select a demo above.")
 
     st.markdown(
         """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
+       This application classifies Iris flowers into four classes: The classes here
+
+       Input the values for each feature to classify your flower 
+       """
     )
+
+    sepal_length = st.text_input(label = 'sepal_length')
+    sepal_width = st.text_input(label = 'sepal_width')
+    petal_length = st.text_input(label = 'petal_length')
+    petal_width = st.text_input(label = 'petal_width')
+    attributes_list = eval('[' + st.text_input(label = 'parameters list') + ']')
+
+    if st.button('Submit'):
+        if len(attributes_list) > 0: # when there is a values
+            st.write(f'The value you submitted are: ', attributes_list )
+            user_iris = np.array([attributes_list])
+        else : #No list of values. Use the first four fields instead
+            st.write(f' The values you submitted are : ' , sepal_length, sepal_width, petal_length, petal_width)
+            user_iris = np.array([[sepal_length, sepal_width , petal_length, petal_width]])
+        
+
+        #Scale the inputs
+        user_iris_scaled = scaler.transform(user_iris)
+        st.write(f'Scaled Data: {user_iris_scaled}')
+
+        # Use the model to predict
+        results = model.predict(user_iris_scaled) #
+
+        st.write(f' THeir results are : {results}')
+        iris_classes = [' Iris-Setosa' , 'Iris-Versicolor', 'Iris-Viginica']
+        for i in results:
+            st.write(f' Your Iris is of type : {iris_classes[i]}')
+
+
 
 
 if __name__ == "__main__":
